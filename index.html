@@ -146,7 +146,7 @@
 
     for (var i = 0; i < paths.length; i++) {
       paths[i].addEventListener("click", function(e){
-        console.log("Coef toponomie : "+e.target.getAttribute('data-desc'));
+        console.log(e.target.getAttribute('data-num') +' : '+e.target.getAttribute('data-desc'));
       })
     }
 
@@ -171,7 +171,9 @@
 
           resultat[dept] = {
             "score": 0,
-            "count":0
+            "count":0,
+            "count_oil":0,
+            "count_oc":0
           }
         }
 
@@ -179,12 +181,14 @@
           case -1:
             resultat[dept].score+= -1;
     		resultat[dept].count++;
+    		resultat[dept].count_oil++;
             break;
           case 0:
             break
           case 1:
           	resultat[dept].score+= 1;
         	resultat[dept].count++;
+    		resultat[dept].count_oc++;
         	break;
         }
 
@@ -199,27 +203,23 @@
         score = (resultat[key].score / resultat[key].count);
         //console.log("score dept "+key+" == "+score+' --');
 
-        var n = 10000 * (score);
+        var n = score;
 		
 		var color = '';
         
         if (n < 0){ //oil
-        	var s = (n/(-100))*100;
+        	var s = (n*-1)*100;
         	color = 'hsl(0,'+s+'%,50%)'; //rouge
-        }else{
-        	var s = (n/(100))*100;
-        	color = 'hsl(215,'+s+'%,50%)'; //bleu
+        }else {
+        	if(n > 0){
+	        	var s = (n)*100;
+	        	color = 'hsl(215,'+s+'%,50%)'; //bleu
+	        }
         }
-
-        n = (n > 50) ? 50 : n;
-        n = (n < -50) ? -50 : n;
-
-        var c = n + 300;
-        var color = 'hsl(' + c + ',100%,50%)';
 
         $("path[data-num="+key+"]").css('fill',color);
 
-        $("path[data-num="+key+"]").attr('data-desc',(resultat[key].score / resultat[key].count));
+        $("path[data-num="+key+"]").attr('data-desc',"nb villes match = "+resultat[key].count+" | count oil/oc : " + resultat[key].count_oil +' / '+ resultat[key].count_oc);
       });
       test_oc_oil(ville);
     });
@@ -227,9 +227,19 @@
 
   function test_oc_oil(ville){
 
-    var adj = ["LONG", "GRAND", "BEAU", "COURT", "NEU", "NEUF","NEUVE","FONT","VAL","MONT","VILLE"];
+  	//test avant après
+
+  	///oil
+    var suffixe = ["MONT","Y","VILLE", "VAL", "FONT", "COURT"];
+
+    var suffixe_oc = ["AC", "ACQ", "AT", "IX", "OSC", "OSQUE"];
+    
+    //oc
+    var prefixe = ["CHAN", "VILL", "VAL", "FONT", "COURT","MONT"];
+    
+    //contien
     var liste_mots_oc = ["CAST"];
-    var liste_mots_oil = ["CHAT","CHATE"];
+    var liste_mots_oil = ["BEAU","BELLE","GRAND","CHAT","CHATE"];
 
     var trouve = false;
 
@@ -251,8 +261,8 @@
     }
 
     //on cherche à la fin ==> oil
-    for (var i = 0; i < adj.length; i++) {
-      var mot = adj[i];
+    for (var i = 0; i < suffixe.length; i++) {
+      var mot = suffixe[i];
 
       re = new RegExp(mot+"$")
       //console.log(' ? '+re+' ==> '+ville+" ?");
@@ -267,9 +277,26 @@
       return -1;
     }
 
+    for (var i = 0; i < suffixe_oc.length; i++) {
+      var mot = suffixe_oc[i];
+
+      re = new RegExp(mot+"$")
+      //console.log(' ? '+re+' ==> '+ville+" ?");
+
+      if(re.test(ville)){
+        trouve = true;
+        break;
+      }
+    }
+
+    if(trouve){
+      return 1;
+    }
+
+    /*
     //on cherche au début ==> oc
-    for (var i = 0; i < adj.length; i++) {
-      var mot = adj[i];
+    for (var i = 0; i < suffixe.length; i++) {
+      var mot = suffixe[i];
 
       re = new RegExp("^"+mot)
       //console.log(' ? '+re+' ==> '+ville+" ?");
@@ -283,6 +310,7 @@
     if(trouve){
       return 1;
     }
+    */
     return 0;
   }
 
